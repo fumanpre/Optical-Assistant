@@ -17,6 +17,21 @@
         color: #333;
       }
 
+      /* Skip link for keyboard users */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 10px;
+        background: #000;
+        color: #fff;
+        padding: 8px;
+        z-index: 100;
+      }
+
+      .skip-link:focus {
+        top: 10px;
+      }
+
       .container {
         background: white;
         width: 100%;
@@ -26,21 +41,21 @@
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
       }
 
-      .header {
+      header {
         text-align: center;
         margin-bottom: 30px;
       }
 
-      .header h1 {
+      header h1 {
         margin: 0;
         font-size: 28px;
         color: #0f4c81;
       }
 
-      .header p {
+      header p {
         margin: 6px 0 0;
         font-size: 14px;
-        color: #666;
+        color: #555;
       }
 
       label {
@@ -60,9 +75,7 @@
       }
 
       textarea:focus {
-        outline: none;
-        border-color: #1b6ca8;
-        box-shadow: 0 0 0 2px rgba(27, 108, 168, 0.2);
+        outline: 3px solid #1b6ca8;
       }
 
       button {
@@ -74,7 +87,10 @@
         border-radius: 6px;
         font-weight: 600;
         cursor: pointer;
-        transition: 0.2s ease;
+      }
+
+      button:focus {
+        outline: 3px solid #000;
       }
 
       button:hover {
@@ -96,7 +112,7 @@
         line-height: 1.6;
       }
 
-      .footer {
+      footer {
         margin-top: 30px;
         text-align: center;
         font-size: 12px;
@@ -112,47 +128,79 @@
   </head>
 
   <body>
+    <!-- Skip navigation link -->
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
+
     <div class="container">
-      <div class="header">
+      <header role="banner">
         <h1>OptiAssist</h1>
         <p>AI-Powered Clinical Support for Eye Care Professionals</p>
-      </div>
+      </header>
 
-      <main>
-        <label for="question">Enter your clinical question</label>
-        <textarea
-          id="question"
-          placeholder="Example: Can a patient drive after dilation?"
-          aria-label="Ask a clinical question"
+      <main id="mainContent" role="main">
+        <form
+          onsubmit="event.preventDefault(); ask();"
+          aria-labelledby="questionLabel"
         >
-        </textarea>
+          <label id="questionLabel" for="question">
+            Enter your clinical question
+          </label>
 
-        <button id="submitBtn" onclick="ask()">Submit</button>
+          <textarea
+            id="question"
+            placeholder="Example: Can a patient drive after dilation?"
+            aria-describedby="questionHint"
+            required
+          ></textarea>
 
-        <div class="response-box" id="response" aria-live="polite">
+          <div
+            id="questionHint"
+            style="font-size: 12px; color: #666; margin-top: 4px"
+          >
+            Press Enter to submit. Shift + Enter for a new line.
+          </div>
+
+          <button
+            id="submitBtn"
+            type="submit"
+            aria-label="Submit clinical question"
+          >
+            Submit
+          </button>
+        </form>
+
+        <!-- Accessible status region -->
+        <section
+          class="response-box"
+          id="response"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           Your response will appear here...
-        </div>
+        </section>
       </main>
 
-      <div class="footer">
+      <footer role="contentinfo">
         © 2026 OptiAssist | Clinical AI for Modern Optometry Practices
-      </div>
+      </footer>
     </div>
 
     <script>
       async function ask() {
-        const question = document.getElementById("question").value.trim();
+        const textarea = document.getElementById("question");
+        const question = textarea.value.trim();
         const button = document.getElementById("submitBtn");
         const responseBox = document.getElementById("response");
 
         if (!question) {
-          responseBox.innerText = "Please enter a question.";
+          responseBox.textContent = "Please enter a question.";
           return;
         }
 
         button.disabled = true;
-        button.innerText = "Thinking...";
-        responseBox.innerText = "Generating response...";
+        button.textContent = "Query Submitted ...";
+        responseBox.textContent = "Please wait ...";
 
         try {
           const res = await fetch("/ask", {
@@ -162,14 +210,24 @@
           });
 
           const data = await res.json();
-          responseBox.innerText = data.answer;
+          responseBox.textContent = data.answer;
         } catch (err) {
-          responseBox.innerText = "An error occurred. Please try again.";
+          responseBox.textContent = "An error occurred. Please try again.";
         }
 
         button.disabled = false;
-        button.innerText = "Submit";
+        button.textContent = "Submit";
       }
+
+      // Keyboard Enter support (without breaking multiline)
+      document
+        .getElementById("question")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            ask();
+          }
+        });
     </script>
   </body>
 </html>

@@ -4,11 +4,13 @@ const OpenAI = require("openai");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// connect to database to add embedding
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
+// list of response might be suitable for queries asked
 const documents = [
   // Company Overview
   "Optical-Assist is a Canadian practice management software designed specifically for optometry clinics and eye care professionals.",
@@ -93,14 +95,17 @@ const documents = [
 async function seed() {
   await client.connect();
 
+  // using chatgpt text-embedding-3-small to generate the embedding
   for (let doc of documents) {
     const embedding = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: doc,
     });
 
+    // making sure the vector structure is suitable in order to add it to database
     const vector = `[${embedding.data[0].embedding.join(",")}]`;
 
+    // this is where we insert into the database
     await client.query(
       "INSERT INTO documents (content, embedding) VALUES ($1, $2)",
       [doc, vector]

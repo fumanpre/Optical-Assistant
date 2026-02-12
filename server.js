@@ -13,6 +13,7 @@ app.use(express.static("public"));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// connection to database
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -20,22 +21,36 @@ const client = new Client({
 
 client.connect();
 
-function maskPII(text) {
-  return text
-    .replace(/\b[A-Z][a-z]+ [A-Z][a-z]+\b/g, "[NAME]")
-    .replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, "[PHONE]");
+// personal information detection
+function containsPII(text) {
+  const emailRegex = /\S+@\S+\.\S+/;
+  const phoneRegex = /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/;
+  const healthCardRegex = /\b\d{10}\b/; // basic example
+
+  return (
+    emailRegex.test(text) || phoneRegex.test(text) || healthCardRegex.test(text)
+  );
 }
 
+// API endpoint
 app.post("/ask", async (req, res) => {
   try {
-    let question = maskPII(req.body.question);
+    let question = req.body.question;
+
+    // response if query contains the personel information
+    if (containsPII(question)) {
+      return res.json({
+        answer:
+          "Personal patient information detected.\n\nFor privacy protection, please remove any personal information (names, phone numbers, addresses, health card numbers, etc.) and submit your query again.",
+      });
+    }
 
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: question,
     });
 
-    // Convert JS array → pgvector string
+    // Convert JS array into pgvector string
     const queryVector = `[${embeddingResponse.data[0].embedding.join(",")}]`;
 
     const result = await client.query(
@@ -48,6 +63,7 @@ app.post("/ask", async (req, res) => {
 
     const context = result.rows.map((row) => row.content).join("\n");
 
+    // using openAI to get the answer to the queries with restrictions imposed on the response generated
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -63,8 +79,13 @@ app.post("/ask", async (req, res) => {
       ],
     });
 
-    res.json({ answer: completion.choices[0].message.content });
+    // success return the response
+    return res.json({
+      type: "success",
+      answer: completion.choices[0].message.content,
+    });
   } catch (error) {
+    // error handling
     console.error(error);
     res.status(500).json({ error: "Something went wrong." });
   }
