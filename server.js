@@ -45,6 +45,8 @@ app.post("/ask", async (req, res) => {
       });
     }
 
+    const startTime = Date.now();
+
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: question,
@@ -67,10 +69,15 @@ app.post("/ask", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
+        // System Guardrail Prompt
         {
           role: "system",
-          content:
-            "You are an assistant for an optometry clinic. Use only the provided context. Do not give medical diagnosis.",
+          content: `
+              You are a clinical support assistant for optometry professionals.
+              Do not provide medical diagnosis.
+              Do not provide treatment instructions.
+              Encourage consultation with licensed professionals.
+            `,
         },
         {
           role: "user",
@@ -78,6 +85,19 @@ app.post("/ask", async (req, res) => {
         },
       ],
     });
+
+    const latency = Date.now() - startTime;
+
+    // add data such as user question, latency in database
+    try {
+      await client.query(
+        "INSERT INTO logging (question, latency_ms) VALUES ($1, $2)",
+        [question, latency]
+      );
+    } catch (logError) {
+      console.error("Logging failed:", logError.message);
+      // Do NOT throw error — logging failure should not break user response
+    }
 
     // success return the response
     return res.json({
@@ -91,6 +111,10 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
