@@ -1,4 +1,5 @@
-# 🏥 OptiAssist — AI-Powered Optometry Assistant  
+# 🏥 OptiAssist — AI-Powered Optometry Assistant
+
 **Node.js | RAG | LLM Integration | Accessibility | Safety Controls**
 
 OptiAssist is a production-style AI feature prototype designed for optometry practice management software. It demonstrates how LLM-powered capabilities can be safely, efficiently, and accessibly integrated into a healthcare product.
@@ -14,7 +15,9 @@ OptiAssist implements a Retrieval-Augmented Generation (RAG) pipeline that enabl
 The system demonstrates:
 
 - LLM API integration
-- Embeddings & vector search
+- Accepts company PDF uploads (admin controlled)
+- Chunks & embeds documents
+- Vector search–based semantic retrieval
 - Context grounding
 - Prompt design
 - Safety & PII masking
@@ -23,17 +26,53 @@ The system demonstrates:
 - Production-style deployment
 
 ---
+
+# Secure Company Knowledge Base (New Feature)
+
+OptiAssist now supports secure PDF ingestion, allowing the AI to answer strictly based on official company documents.
+
+## Admin-Controlled Capabilities
+
+### Only authorized administrators (via server-validated passcode) can:
+
+- Upload clinic/company PDF files
+- View uploaded documents
+- Delete documents (removes all associated embeddings)
+
+### PDF Processing Pipeline
+
+When a PDF is uploaded:
+
+1. SHA-256 file hash generated (prevents duplicate uploads)
+2. PDF parsed using pdf-parse
+3. Text chunked into manageable segments
+4. Embeddings generated using `text-embedding-3-small`
+5. Stored in PostgreSQL (Neon) with pgvector
+6. Linked to document metadata
+
+This ensures:
+
+- RAG answers are grounded only in uploaded company files
+  -No hallucinated external information
+  -Controlled knowledge exposure
+  -Scalable document ingestion architecture
+
+---
+
 # Stack Used:
+
 - OpenAI API (Chat + Embeddings)
 - Retrieval-Augmented Generation (RAG)
 - Node.js + Express
-- RESTful API 
+- RESTful API
 - PostgreSQL (Neon Cloud) + pgvector
 - NVDA & VoiceOver (for testing accessibility)
 
 # Deployment
+
 - Render (Backend Hosting)
 - Neon PostgreSQL (Managed DB)
+
 ---
 
 # AI / LLM Feature Implementation
@@ -41,7 +80,7 @@ The system demonstrates:
 ## 1. Product Features Powered by LLMs
 
 - AI Patient Q&A Assistant grounded in clinic documents
-- Context-aware responses using embeddings + vector search
+- Context-aware responses using vector search
 - Guardrail-controlled answer generation
 - Healthcare-safe response constraints (no medical diagnosis)
 
@@ -56,13 +95,13 @@ The system demonstrates:
 
 ### Integration Flow
 
-1. Receive user query  
-2. Mask PII  
-3. Generate embedding  
-4. Retrieve relevant documents  
-5. Construct grounded prompt  
-6. Call LLM  
-7. Return safe response  
+1. Receive user query
+2. Mask PII
+3. Generate embedding
+4. Retrieve relevant documents
+5. Construct grounded prompt
+6. Call LLM
+7. Return safe response
 
 ---
 
@@ -109,6 +148,3 @@ Testing validated:
 - Proper screen reader announcements
 - Form field label recognition
 - Heading navigation consistency
-
-
-
