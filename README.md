@@ -2,7 +2,9 @@
 
 **Node.js | RAG | LLM Integration | Accessibility | Safety Controls**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge)](https://your-site-link.com)
+🌐 **Live Demo:** https://optical-assistant.onrender.com
+
+[![Visit Site](https://img.shields.io/badge/Live-Demo-green?style=for-the-badge)](https://optical-assistant.onrender.com)
 
 OptiAssist is a production-style AI feature prototype designed for optometry practice management software. It demonstrates how LLM-powered capabilities can be safely, efficiently, and accessibly integrated into a healthcare product.
 
